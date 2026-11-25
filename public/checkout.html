@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Finalizar pedido | Supremo Açaí e Petiscaria</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b5e59">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="/img/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/img/icon-192.png">
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body data-page="checkout">
+  <header id="top"></header>
+  <main class="page">
+    <div class="container">
+      <h1 style="font-size:clamp(1.6rem,4vw,2.2rem)">Finalizar pedido</h1>
+      <div id="emptyCart" class="panel empty-state" hidden><h2>Seu carrinho está vazio</h2><a class="btn btn-brand" href="/cardapio.html">Ver cardápio</a></div>
+      <form class="checkout" id="form" novalidate>
+        <div style="display:grid;gap:18px">
+          <div class="panel">
+            <h2><span class="step-n">1</span> Seus dados</h2>
+            <div class="row2">
+              <label class="field"><span>Nome *</span><input name="customer_name" autocomplete="name" required maxlength="80"></label>
+              <label class="field"><span>WhatsApp *</span><input name="customer_phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(71) 9 0000-0000" required></label>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2><span class="step-n">2</span> Como você quer receber?</h2>
+            <div class="choices" id="modes">
+              <div class="choice" id="optDelivery"><input type="radio" name="mode" value="delivery" id="m-del" checked><label for="m-del">🛵 Delivery<small id="feeLabel">Taxa R$ 5,00</small></label></div>
+              <div class="choice" id="optPickup"><input type="radio" name="mode" value="pickup" id="m-pick"><label for="m-pick">🏪 Retirar na loja<small>Sem taxa de entrega</small></label></div>
+            </div>
+            <div id="addressBox">
+              <label class="field"><span>Endereço completo *</span><input name="address" autocomplete="street-address" placeholder="Rua, número, bairro" maxlength="300"></label>
+              <label class="field"><span>Ponto de referência</span><input name="address_ref" placeholder="Ex.: próximo à praça, casa azul" maxlength="200"></label>
+            </div>
+            <div id="pickupBox" class="alert info" hidden></div>
+          </div>
+
+          <div class="panel">
+            <h2><span class="step-n">3</span> Forma de pagamento</h2>
+            <div class="choices" id="payments"></div>
+            <div id="changeBox" hidden>
+              <label class="field"><span>Troco para quanto? (opcional)</span><input name="change_for" inputmode="decimal" placeholder="Ex.: 50,00"></label>
+            </div>
+            <p id="payHint" class="alert info" hidden></p>
+            <label class="field"><span>Observações do pedido</span><textarea name="notes" rows="2" maxlength="500" placeholder="Alguma informação para a loja?"></textarea></label>
+          </div>
+        </div>
+
+        <aside class="panel summary-sticky">
+          <h2>Resumo</h2>
+          <div id="items"></div>
+          <div class="totals" id="totals"></div>
+          <div class="alert" id="err" hidden role="alert"></div>
+          <button class="btn btn-accent btn-block btn-lg" id="submit" type="submit">Confirmar pedido</button>
+          <p style="font-size:.8rem;color:var(--muted);text-align:center;margin:10px 0 0">Seus dados são usados somente para entregar e comunicar seu pedido.</p>
+        </aside>
+      </form>
+    </div>
+  </main>
+  <footer id="foot"></footer>
+  <script src="/js/common.js"></script>
+  <script src="/js/checkout.js"></script>
+</body>
+</html>

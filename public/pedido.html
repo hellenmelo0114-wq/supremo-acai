@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Acompanhar pedido | Supremo Açaí e Petiscaria</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b5e59">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="/img/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/img/icon-192.png">
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body data-page="track">
+  <header id="top"></header>
+  <main class="page">
+    <div class="container" style="max-width:980px">
+      <div id="lookup" class="panel" hidden style="max-width:520px;margin:0 auto">
+        <h1 style="font-size:1.6rem">Acompanhar pedido</h1>
+        <p style="color:var(--muted)">Digite o código do pedido que aparece na confirmação ou no link recebido.</p>
+        <form id="lookupForm" style="display:flex;gap:10px">
+          <label class="sr-only" for="codeIn">Código do pedido</label>
+          <input id="codeIn" class="field" style="flex:1;margin:0;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;text-transform:uppercase" placeholder="Ex.: K7M2QX9PAB" maxlength="12" required>
+          <button class="btn btn-brand">Buscar</button>
+        </form>
+        <div class="alert" id="lookupErr" hidden></div>
+        <div id="recent"></div>
+      </div>
+      <div id="view" hidden></div>
+    </div>
+  </main>
+  <footer id="foot"></footer>
+  <script src="/js/common.js"></script>
+  <script src="/js/track.js"></script>
+</body>
+</html>
