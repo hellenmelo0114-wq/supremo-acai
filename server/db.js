@@ -9,13 +9,23 @@ const fs = require('fs');
 const { AsyncLocalStorage } = require('async_hooks');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
-const REMOTE = Boolean(process.env.TURSO_DATABASE_URL);
-// Na nuvem usa o cliente HTTP (sem binários nativos); no computador, o arquivo local.
-const { createClient } = REMOTE ? require('@libsql/client/web') : require('@libsql/client');
-if (!REMOTE) fs.mkdirSync(DATA_DIR, { recursive: true });
-const client = createClient(REMOTE
-  ? { url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN }
-  : { url: 'file:' + path.join(DATA_DIR, 'supremo.db') });
+// limpa espaços/aspas que às vezes vêm junto ao colar as variáveis na Vercel
+const envClean = (v) => String(v || '').trim().replace(/^["']|["']$/g, '').trim();
+const TURSO_URL = envClean(process.env.TURSO_DATABASE_URL).replace(/^https:\/\//, 'libsql://');
+const TURSO_TOKEN = envClean(process.env.TURSO_AUTH_TOKEN);
+const REMOTE = Boolean(TURSO_URL);
+const ON_VERCEL = Boolean(process.env.VERCEL);
+// Na Vercel não há disco permanente: sem o Turso configurado o banco não funciona.
+const CONFIG_ERROR = ON_VERCEL && !REMOTE
+  ? 'Banco de dados não configurado: cadastre TURSO_DATABASE_URL e TURSO_AUTH_TOKEN em Settings › Environment Variables na Vercel e faça Redeploy.'
+  : (REMOTE && !TURSO_TOKEN ? 'Falta a variável TURSO_AUTH_TOKEN (token do banco Turso) na Vercel.' : null);
+let client;
+if (!CONFIG_ERROR) {
+  // Na nuvem usa o cliente HTTP (sem binários nativos); no computador, o arquivo local.
+  const { createClient } = REMOTE ? require('@libsql/client/web') : require('@libsql/client');
+  if (!REMOTE) fs.mkdirSync(DATA_DIR, { recursive: true });
+  client = createClient(REMOTE ? { url: TURSO_URL, authToken: TURSO_TOKEN } : { url: 'file:' + path.join(DATA_DIR, 'supremo.db') });
+}
 
 // Transação atual (cada requisição dentro de tx() usa a mesma transação)
 const txStore = new AsyncLocalStorage();
@@ -37,7 +47,15 @@ const db = {
   },
   async exec(sql) { return exec().executeMultiple(sql); },
   // vários comandos de uma vez, tudo ou nada
-  async batch(stmts) { return client.batch(stmts.map(x => ({ sql: x.sql, args: clean(x.args || []) })), 'write'); }
+  // em blocos, dentro de uma única transação (tudo ou nada)
+  async batch(stmts) {
+    const list = stmts.map(x => ({ sql: x.sql, args: clean(x.args || []) }));
+    const t = await client.transaction('write');
+    try {
+      for (let i = 0; i < list.length; i += 150) await t.batch(list.slice(i, i + 150));
+      await t.commit();
+    } catch (e) { try { await t.rollback(); } catch { /* ignore */ } throw e; } finally { t.close(); }
+  }
 };
 
 async function tx(fn) {
@@ -348,7 +366,8 @@ BEGIN SELECT RAISE(ABORT, 'Registro de auditoria é somente leitura'); END;
 let initPromise = null;
 function init() {
   if (!initPromise) initPromise = (async () => {
-    await client.execute('PRAGMA foreign_keys = ON');
+    if (CONFIG_ERROR) { const e = new Error(CONFIG_ERROR); e.status = 503; e.expose = true; throw e; }
+    if (!REMOTE) await client.execute('PRAGMA foreign_keys = ON');
     await client.executeMultiple(SCHEMA);
   })().catch(e => { initPromise = null; throw e; });
   return initPromise;
@@ -427,4 +446,4 @@ async function exportAll() {
   return out;
 }
 
-module.exports = { db, tx, init, getSetting, setSetting, allSettings, audit, exportAll, DATA_DIR, REMOTE, DEFAULT_SETTINGS };
+module.exports = { CONFIG_ERROR, ON_VERCEL, TURSO_URL, db, tx, init, getSetting, setSetting, allSettings, audit, exportAll, DATA_DIR, REMOTE, DEFAULT_SETTINGS };

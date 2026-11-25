@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const express = require('express');
 const multer = require('multer');
 
+const dbmod = require('./db');
 const { db, tx, init, allSettings, setSetting, getSetting, audit, exportAll, DATA_DIR, REMOTE, DEFAULT_SETTINGS } = require('./db');
 const auth = require('./auth');
 const { requireAuth, requirePerm, can } = auth;
@@ -58,6 +59,27 @@ app.use(async (req, res, next) => {
   next();
 });
 app.use(express.json({ limit: '200kb' }));
+// Diagnóstico (não mostra senhas): ajuda a conferir a configuração na Vercel
+app.get('/api/health', async (req, res) => {
+  const out = {
+    ok: false,
+    banco: dbmod.REMOTE ? 'Turso (nuvem)' : (dbmod.ON_VERCEL ? 'NÃO CONFIGURADO' : 'arquivo local'),
+    banco_endereco: dbmod.TURSO_URL ? dbmod.TURSO_URL.replace(/^(libsql:\/\/[^.]{0,6}).*/, '$1…') : null,
+    variaveis: {
+      TURSO_DATABASE_URL: Boolean(process.env.TURSO_DATABASE_URL), TURSO_AUTH_TOKEN: Boolean(process.env.TURSO_AUTH_TOKEN),
+      BLOB_READ_WRITE_TOKEN: Boolean(process.env.BLOB_READ_WRITE_TOKEN)
+    }
+  };
+  try {
+    await ready();
+    out.produtos = (await db.prepare('SELECT COUNT(*) n FROM products').get()).n;
+    out.categorias = (await db.prepare('SELECT COUNT(*) n FROM categories').get()).n;
+    out.usuarios = (await db.prepare('SELECT COUNT(*) n FROM users').get()).n;
+    out.ok = true;
+  } catch (e) { out.erro = e.message; }
+  res.setHeader('Cache-Control', 'no-store');
+  res.status(out.ok ? 200 : 503).json(out);
+});
 app.use(['/api', '/sitemap.xml'], async (req, res, next) => { await ready(); next(); });
 
 // Proteção CSRF: chamadas que alteram dados no painel precisam do cabeçalho próprio do site
@@ -826,7 +848,7 @@ app.use('/api', async (req, res) => res.status(404).json({ error: 'Rota não enc
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   const status = err.status || (err instanceof multer.MulterError ? 400 : 500);
   if (status >= 500) console.error(err);
-  res.status(status).json({ error: status >= 500 ? 'Erro interno. Tente novamente.' : err.message });
+  res.status(status).json({ error: status >= 500 && !err.expose ? 'Erro interno. Tente novamente.' : err.message });
 });
 
 if (require.main === module) {

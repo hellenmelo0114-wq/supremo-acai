@@ -501,6 +501,7 @@ async function seedMenuIfEmpty() {
     });
   });
   add("INSERT INTO settings (key, value) VALUES ('menu_seeded', 'true') ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+  console.log(`Gravando cardápio inicial (${st.length} comandos)...`);
   await db.batch(st);
   return true;
 }

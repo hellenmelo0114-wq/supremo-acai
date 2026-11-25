@@ -2,7 +2,8 @@
   const S = window.Supremo; const $ = S.$;
   await S.ready;
   let menu;
-  try { menu = await S.api('/api/public/menu'); } catch { menu = { categories: [], uncategorized: [] }; }
+  let loadError = null;
+  try { menu = await S.api('/api/public/menu'); } catch (e) { loadError = e.message; menu = { categories: [], uncategorized: [] }; }
   S.indexProducts(menu);
   const sections = menu.categories.filter(c => c.products.length);
   if (menu.uncategorized.length) sections.push({ id: 'outros', name: 'Outros', products: menu.uncategorized });
@@ -12,6 +13,8 @@
     const vis = sections.map(s => ({ ...s, products: s.products.filter(p => !f || (p.name + ' ' + p.description).toLowerCase().includes(f)) })).filter(s => s.products.length);
     $('#tabs').innerHTML = vis.map((s, i) => `<a href="#cat-${s.id}" class="${i === 0 ? 'active' : ''}">${S.esc(s.name)}</a>`).join('');
     if (!sections.length) {
+      if (loadError) { $('#menu').innerHTML = `<div class="empty-state"><h2>Não foi possível carregar o cardápio</h2><p>Tente atualizar a página em instantes ou faça seu pedido pelo WhatsApp.</p><p style="font-size:.8rem">${S.esc(loadError)}</p>
+        <a class="btn btn-wa" href="${S.waLink('Olá! Gostaria de fazer um pedido.')}" target="_blank" rel="noopener">${S.ICONS.wa} Pedir pelo WhatsApp</a></div>`; return; }
       $('#menu').innerHTML = `<div class="empty-state"><h2>Cardápio em breve</h2><p>Nosso cardápio online está sendo cadastrado. Faça seu pedido pelo WhatsApp enquanto isso.</p>
         <a class="btn btn-wa" href="${S.waLink('Olá! Gostaria de fazer um pedido.')}" target="_blank" rel="noopener">${S.ICONS.wa} Pedir pelo WhatsApp</a></div>`;
       return;
