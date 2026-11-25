@@ -66,7 +66,8 @@ app.get('/api/health', async (req, res) => {
     banco: dbmod.REMOTE ? 'Turso (nuvem)' : (dbmod.ON_VERCEL ? 'NÃO CONFIGURADO' : 'arquivo local'),
     banco_endereco: dbmod.TURSO_URL ? dbmod.TURSO_URL.replace(/^(libsql:\/\/[^.]{0,6}).*/, '$1…') : null,
     variaveis: {
-      TURSO_DATABASE_URL: Boolean(process.env.TURSO_DATABASE_URL), TURSO_AUTH_TOKEN: Boolean(process.env.TURSO_AUTH_TOKEN),
+      banco_url: Boolean(dbmod.TURSO_URL), banco_token: Boolean(dbmod.TURSO_TOKEN),
+      nomes: Object.keys(process.env).filter(k => /TURSO|LIBSQL|BLOB/.test(k)),
       BLOB_READ_WRITE_TOKEN: Boolean(process.env.BLOB_READ_WRITE_TOKEN)
     }
   };

@@ -11,8 +11,17 @@ const { AsyncLocalStorage } = require('async_hooks');
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 // limpa espaços/aspas que às vezes vêm junto ao colar as variáveis na Vercel
 const envClean = (v) => String(v || '').trim().replace(/^["']|["']$/g, '').trim();
-const TURSO_URL = envClean(process.env.TURSO_DATABASE_URL).replace(/^https:\/\//, 'libsql://');
-const TURSO_TOKEN = envClean(process.env.TURSO_AUTH_TOKEN);
+// aceita também nomes com prefixo criados pela integração da Vercel (ex.: STORAGE_TURSO_DATABASE_URL)
+const findEnv = (...suffixes) => {
+  for (const sfx of suffixes) {
+    if (process.env[sfx]) return process.env[sfx];
+    const k = Object.keys(process.env).find(x => x.endsWith('_' + sfx) && process.env[x]);
+    if (k) return process.env[k];
+  }
+  return '';
+};
+const TURSO_URL = envClean(findEnv('TURSO_DATABASE_URL', 'TURSO_URL', 'LIBSQL_URL')).replace(/^https:\/\//, 'libsql://');
+const TURSO_TOKEN = envClean(findEnv('TURSO_AUTH_TOKEN', 'TURSO_TOKEN', 'LIBSQL_AUTH_TOKEN'));
 const REMOTE = Boolean(TURSO_URL);
 const ON_VERCEL = Boolean(process.env.VERCEL);
 // Na Vercel não há disco permanente: sem o Turso configurado o banco não funciona.
@@ -446,4 +455,4 @@ async function exportAll() {
   return out;
 }
 
-module.exports = { CONFIG_ERROR, ON_VERCEL, TURSO_URL, db, tx, init, getSetting, setSetting, allSettings, audit, exportAll, DATA_DIR, REMOTE, DEFAULT_SETTINGS };
+module.exports = { CONFIG_ERROR, ON_VERCEL, TURSO_URL, TURSO_TOKEN, db, tx, init, getSetting, setSetting, allSettings, audit, exportAll, DATA_DIR, REMOTE, DEFAULT_SETTINGS };
