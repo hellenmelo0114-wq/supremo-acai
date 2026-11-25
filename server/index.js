@@ -12,7 +12,8 @@ const { requireAuth, requirePerm, can } = auth;
 const orders = require('./orders');
 const { httpError, nowLocal, today } = orders;
 const analytics = require('./analytics');
-const exporter = require('./export');
+// carregado só na hora de exportar relatórios (PDF/Excel)
+const exporter = { toExcel: (...a) => require('./export').toExcel(...a), toPdf: (...a) => require('./export').toPdf(...a) };
 const { buildPixPayload } = require('./pix');
 const mp = require('./payments');
 const QRCode = require('qrcode');
